@@ -1,11 +1,28 @@
-let _tag = '[router/index.js]'
-let express = require('express');
-let router = express.Router();
+const _tag = '[router/index.js]'
+const express = require('express')
+const router = express.Router()
+const AWS = require('aws-sdk')
+AWS.config.update({ region: process.env.AWS_REGION })
+const kinesis = new AWS.Kinesis()
 
-router.post('/', function(req, res, next) {
-  console.log(_tag + 'headers', JSON.stringify(req.headers))
-  console.log(_tag + 'body', JSON.stringify(req.body))
-  res.send(200, '[post/] hello world')
-});
+router.post('/', (req, res, next) => {
+  const params = {
+    'Data': Buffer.from(JSON.stringify(req.body)).toString('base64'),
+    'PartitionKey': 'testkey',
+    'StreamName': process.env.KINESIS_STREAM
+  }
+  sendRecord(params, (err, data) => {
+    if (err) return next(err)
+    res.send(200, data)
+  })
+})
 
-module.exports = router;
+sendRecord = (params, callback) => {
+  kinesis.putRecord(params, (err, data) => {
+    if (err) return callback(err)
+    console.log(_tag, data)
+    callback(null, 'success')
+  })
+}
+
+module.exports = router
