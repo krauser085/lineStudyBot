@@ -6,8 +6,9 @@ AWS.config.update({ region: process.env.AWS_REGION })
 const kinesis = new AWS.Kinesis()
 
 router.post('/', (req, res, next) => {
+  const event = req.body
   const params = {
-    'Data': Buffer.from(JSON.stringify(req.body)).toString('base64'),
+    'Data': JSON.stringify(event),
     'PartitionKey': 'testkey',
     'StreamName': process.env.KINESIS_STREAM
   }
